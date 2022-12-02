@@ -1,28 +1,56 @@
 const crypto = require("crypto");
 
-exports.deterministicPartitionKey = (event) => {
-  const TRIVIAL_PARTITION_KEY = "0";
-  const MAX_PARTITION_KEY_LENGTH = 256;
-  let candidate;
+// Return encrypted key for the given data
+const getEncryptedDigestKey = (data) => {
+  let digestKey;
+  if (data) {
+    digestKey = crypto.createHash("sha3-512").update(data).digest("hex");
+  }
+
+  return digestKey;
+}
+
+// Extract the candidate key from the input
+const getCandidateKey = (event) => {
+  let candidateKey;
 
   if (event) {
     if (event.partitionKey) {
-      candidate = event.partitionKey;
+      candidateKey = event.partitionKey;
     } else {
       const data = JSON.stringify(event);
-      candidate = crypto.createHash("sha3-512").update(data).digest("hex");
+      candidateKey = getEncryptedDigestKey(data);
     }
   }
 
-  if (candidate) {
-    if (typeof candidate !== "string") {
-      candidate = JSON.stringify(candidate);
+  return candidateKey;
+};
+
+// Validate and provide the formatted key
+const getFormattedCanidateKey = (candidateKey) => {
+  const TRIVIAL_PARTITION_KEY = "0";
+  const MAX_PARTITION_KEY_LENGTH = 256;
+
+  let formattedCandidateKey = candidateKey;
+  if (formattedCandidateKey) {
+    if (typeof formattedCandidateKey !== "string") {
+      formattedCandidateKey = JSON.stringify(formattedCandidateKey);
     }
   } else {
-    candidate = TRIVIAL_PARTITION_KEY;
+    formattedCandidateKey = TRIVIAL_PARTITION_KEY;
   }
-  if (candidate.length > MAX_PARTITION_KEY_LENGTH) {
-    candidate = crypto.createHash("sha3-512").update(candidate).digest("hex");
+  if (formattedCandidateKey.length > MAX_PARTITION_KEY_LENGTH) {
+    formattedCandidateKey = getEncryptedDigestKey(formattedCandidateKey);
   }
-  return candidate;
+
+  return formattedCandidateKey;
+};
+
+exports.deterministicPartitionKey = (event) => {
+  let partitionKey;
+
+  partitionKey = getCandidateKey(event);
+  partitionKey = getFormattedCanidateKey(partitionKey);
+
+  return partitionKey;
 };
