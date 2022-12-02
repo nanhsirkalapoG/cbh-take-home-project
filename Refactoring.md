@@ -9,3 +9,14 @@ You've been asked to refactor the function `deterministicPartitionKey` in [`dpk.
 You will be graded on the exhaustiveness and quality of your unit tests, the depth of your refactor, and the level of insight into your thought process provided by the written explanation.
 
 ## Your Explanation Here
+
+I have splitted the code into multiple functions based on the responsibility.
+I have added test cases as well.
+
+### Method Splitting
+
+| Method Name | Functionality | Reason |
+|-------------|---------------|--------|
+| `getEncryptedDigestKey` | Provide the encrypted digest key for a given input | This method is referred in multiple places. There is a possibility that this can be referred in other components/classes as well |
+| `getCandidateKey` | To extract the candidate Key from the given input | The candidate key extraction logic should be separated. So it can be extended in future independantly |
+| `getFormattedCanidateKey` | To format the candidate Key in the expected format | It can be extended/updated independantly |
